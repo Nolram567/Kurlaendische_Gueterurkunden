@@ -3,63 +3,63 @@ from docx import Document
 import pandas as pd
 
 
-def extract_tables_from_docx(filename):
-    '''
+def extract_tables_from_docx(filename: str) -> list:
+    """
     Reads the .docx-File and creates an pandas Dataframe from the table within the document. I assume that
     there is only one table, which is the case for the present document.
-    :param filename:
-    :return:
-    '''
-    # Laden Sie das Dokument
+
+    """
     doc = Document(filename)
 
-    # Wir nehmen an, dass nur eine Tabelle existiert und verwenden daher doc.tables[0]
+    # Wir nehmen an, dass nur eine Tabelle existiert und verwenden daher doc.tables[0].
     table = doc.tables[0]
-
-    # Initialisieren Sie eine Liste, um die Daten für den DataFrame zu speichern
     data = []
 
-    # Gehe durch jede Zeile in der Tabelle
     for i, row in enumerate(table.rows):
         row_data = [cell.text.strip() for cell in row.cells]  # .strip() entfernt überflüssige Leerzeichen
 
-        # Wenn es die erste Zeile ist, speichern Sie die Spaltennamen
+        # Wenn es die erste Zeile ist, nehmen wir an, dass es sich um die Spaltennamen handelt.
         if i == 0:
-            columns = ['Index'] + row_data  # Fügen Sie 'Index' für den numerischen Index hinzu
+            columns = ['Index'] + row_data  # Füge 'Index' für den numerischen Index hinzu.
         else:
-            # Fügen Sie die Datenzeile der Liste hinzu
-            data.append([i] + row_data)  # Fügen Sie den numerischen Index hinzu, der bei 1 beginnt
+            data.append([i] + row_data)  # Füge den numerischen Index hinzu, der bei 1 beginnt.
 
-    # Erstellen Sie einen DataFrame aus den Daten
     df = pd.DataFrame(data, columns=columns)
 
-    # Optional: Setzen Sie den numerischen Index, der bei 1 beginnt
     df['Index'] = df['Index'].astype(int)  # Stellen Sie sicher, dass der Index numerisch ist
 
+    # Caste den Dataframe zu einem Dictionary (List of Dictionarys).
     return df.to_dict('records')
 
 
-def serialize(d):
+def serialize(d: dict) -> None:
+    """
+    Speichert die Liste als json im Arbeitsverzeichnis.
+    """
     with open('table.json', 'w', encoding='utf-8') as f:
         json.dump(d, f, ensure_ascii=False)
 
 
-def deserialize():
+def deserialize() -> json:
+    """
+    Lädt die Tabelle, welche als JSON vorliegt und gibt sie als Objekt zurück.
+    """
     return json.load(open("table.json", 'r', encoding='utf-8'))
 
 
 def create_csv_from_dict(dict, create_seperate_tables=False):
-   ''' df = pd.DataFrame(columns=["gv_kurland_ueberlieferungen.archiv_neu", "gv_kurland_urkunden.druckdatum",
+    """ df = pd.DataFrame(columns=["gv_kurland_ueberlieferungen.archiv_neu", "gv_kurland_urkunden.druckdatum",
                                "gv_kurland_urkunden.sortierdatum", "gv_kurland_urkunden.ausort",
                                "gv_kurland_urkunden.regest",
                                "gv_kurland_ueberlieferungen.material", "gv_kurland_ueberlieferungen.art",
                                "gv_kurland_ueberlieferungen.siegel",
-                               "gv_kurland_urkunden.urkunde.id", "gv_kurland_urkunden.anmerk_druck"])'''
-   table1 = []
-   table2 = []
-   table3 = []
+                               "gv_kurland_urkunden.urkunde.id", "gv_kurland_urkunden.anmerk_druck"])
+    """
+    table1 = []
+    table2 = []
+    table3 = []
 
-   for e in dict:
+    for e in dict:
         result = distinguish_case(e)
 
         if result[0] == 1:
@@ -71,10 +71,9 @@ def create_csv_from_dict(dict, create_seperate_tables=False):
         else:
             continue
 
-
-   pd.DataFrame(table1).to_csv("Fall1_test.csv", index=False)
-   pd.DataFrame(table2).to_csv("Fall2_test.csv", index=False)
-   pd.DataFrame(table3).to_csv("Fall3_test.csv", index=False)
+    pd.DataFrame(table1).to_csv("Fall1_test.csv", index=False)
+    pd.DataFrame(table2).to_csv("Fall2_test.csv", index=False)
+    pd.DataFrame(table3).to_csv("Fall3_test.csv", index=False)
 
 
 def distinguish_case(ce):
@@ -90,13 +89,12 @@ def distinguish_case(ce):
 
 
 def handle_case_one(ce):
-
     datum_und_ort = get_datum(ce)
     KGU = get_KGU(ce)
     Inhalt_und_Abschrift = get_inhalt(ce)
 
     new_line = {
-        'gv_kurland_ueberlieferungen.archiv_neu' : f"{ce['Signatur']}{', 'if ce['Signatur'] else ''}{ce['Blatt']}",
+        'gv_kurland_ueberlieferungen.archiv_neu': f"{ce['Signatur']}{', ' if ce['Signatur'] else ''}{ce['Blatt']}",
         'gv_kurland_urkunden.druckdatum': datum_und_ort['Druckdatum'],
         'gv_kurland_urkunden.sortierdatum': datum_und_ort['Sortierdatum'],
         'gv_kurland_urkunden.ausort': datum_und_ort['Austellungsort'],
@@ -110,6 +108,7 @@ def handle_case_one(ce):
 
     return new_line
 
+
 def get_datum(ce):
     result_set = {
         "Druckdatum": "",
@@ -120,7 +119,7 @@ def get_datum(ce):
     first_line = line_lst[0]
     if (",") in first_line:
         result_set["Sortierdatum"] = first_line[:(ce['Datum'].find(", "))]
-        result_set["Austellungsort"] = first_line[(ce['Datum'].find(", "))+2:]
+        result_set["Austellungsort"] = first_line[(ce['Datum'].find(", ")) + 2:]
         if len(line_lst) > 1:
             remainder = ', '.join(line_lst[1:])
             result_set["Druckdatum"] = f"{result_set['Sortierdatum']} ({remainder})"
@@ -136,15 +135,15 @@ def get_datum(ce):
 
     return result_set
 
-def get_KGU(ce):
 
+def get_KGU(ce):
     if "\n" in ce['KGU']:
         return " ".join(ce['KGU'].split("\n"))
     else:
         return None
 
-def get_inhalt(ce):
 
+def get_inhalt(ce):
     if "\n" in ce['Inhalt']:
         return ce['Inhalt'].split("\n")
     else:
@@ -152,7 +151,6 @@ def get_inhalt(ce):
 
 
 def handle_case_two(ce):
-
     datum_und_ort = get_datum(ce)
     Inhalt_und_Abschrift = get_inhalt(ce)
 
@@ -166,6 +164,7 @@ def handle_case_two(ce):
 
     return new_line
 
+
 def handle_case_three(ce):
     datum_und_ort = get_datum(ce)
     Inhalt_und_Abschrift = get_inhalt(ce)
@@ -178,6 +177,7 @@ def handle_case_three(ce):
     }
 
     return new_line
+
 
 def analyse_case_distribution(d):
     case1, case2, case3, case4 = 0, 0, 0, 0
@@ -251,7 +251,7 @@ if __name__ == '__main__':
     serialize(dict1)'''
 
     dict = deserialize()
-    #print(json.dumps(dict, indent=4, ensure_ascii=False))
+    # print(json.dumps(dict, indent=4, ensure_ascii=False))
     '''for e in dict:
         print(json.dumps(handle_case_one(e), indent=4, ensure_ascii=False))
 
