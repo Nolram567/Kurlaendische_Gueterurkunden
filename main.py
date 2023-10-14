@@ -5,9 +5,8 @@ import pandas as pd
 
 def extract_tables_from_docx(filename: str) -> list:
     """
-    Reads the .docx-File and creates an pandas Dataframe from the table within the document. I assume that
+    Reads the .docx-File and creates a pandas Dataframe from the table within the document. I assume that
     there is only one table, which is the case for the present document.
-
     """
     doc = Document(filename)
 
@@ -28,7 +27,7 @@ def extract_tables_from_docx(filename: str) -> list:
 
     df['Index'] = df['Index'].astype(int)  # Stellen Sie sicher, dass der Index numerisch ist
 
-    # Caste den Dataframe zu einem Dictionary (List of Dictionarys).
+    # Caste den Dataframe zu einem Dictionary (List of Dictionary's).
     return df.to_dict('records')
 
 
@@ -71,9 +70,9 @@ def create_csv_from_dict(dict, create_seperate_tables=False):
         else:
             continue
 
-    pd.DataFrame(table1).to_csv("Fall1_test.csv", index=False)
-    pd.DataFrame(table2).to_csv("Fall2_test.csv", index=False)
-    pd.DataFrame(table3).to_csv("Fall3_test.csv", index=False)
+    pd.DataFrame(table1).to_csv("Fall1.csv", index=False)
+    pd.DataFrame(table2).to_csv("Fall2.csv", index=False)
+    pd.DataFrame(table3).to_csv("Fall3.csv", index=False)
 
 
 def distinguish_case(ce):
@@ -85,7 +84,7 @@ def distinguish_case(ce):
         return (3, handle_case_three(ce))
     else:
         print(f"Problem mit \n {ce}")
-        return (0, None)
+        return 0, None
 
 
 def handle_case_one(ce):
@@ -185,16 +184,13 @@ def analyse_case_distribution(d):
     for e in d:
 
         if e["Vorlage bekannt?"] == "" or e["Vorlage bekannt?"].lower() == "nein" or e["Vorlage bekannt?"] == "?":
-            # print("Fall 1")
             case1 += 1
             pass
         elif e["Vorlage bekannt?"].lower() == "ja" and e["KGU"].startswith("Bauer"):
             case2 += 1
-            # print("Fall 2 oder 3")
             pass
         elif e["Vorlage bekannt?"].lower() == "ja" and e["KGU"].startswith("erg") and int(e["KGU"][3:]) < 1500:
             case3 += 1
-            # print("Fall 4")
             pass
         else:
             case4 += 1
@@ -251,12 +247,12 @@ if __name__ == '__main__':
     serialize(dict1)'''
 
     dict = deserialize()
-    # print(json.dumps(dict, indent=4, ensure_ascii=False))
+    print(json.dumps(dict, indent=4, ensure_ascii=False))
     '''for e in dict:
         print(json.dumps(handle_case_one(e), indent=4, ensure_ascii=False))
 
     print(pd.DataFrame(dict).columns)'''
-    create_csv_from_dict(dict)
+    #create_csv_from_dict(dict)
     '''analyse_case_distribution(d)
         
         1365 Einträge erfüllen die erste Bedingung, 54 Einträge die zweite Bedingung, 21 Eintreäge die dritte Bedingung und 6 Einträge die vierte Bedingung.
