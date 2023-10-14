@@ -5,8 +5,8 @@ import pandas as pd
 
 def extract_tables_from_docx(filename: str) -> list:
     """
-    Reads the .docx-File and creates a pandas Dataframe from the table within the document. I assume that
-    there is only one table, which is the case for the present document.
+    Liest die vorliegend .docx-Datei und erstellt einen Dataframe aus der vorliegenden Tabelle. Wir nehmen an, dass die
+    Datei nur eine Tabelle enthält.
     """
     doc = Document(filename)
 
@@ -46,7 +46,7 @@ def deserialize() -> json:
     return json.load(open("table.json", 'r', encoding='utf-8'))
 
 
-def create_csv_from_dict(dict, create_seperate_tables=False):
+def create_csv_from_dict(d: dict, create_seperate_tables=False) -> None:
     """ df = pd.DataFrame(columns=["gv_kurland_ueberlieferungen.archiv_neu", "gv_kurland_urkunden.druckdatum",
                                "gv_kurland_urkunden.sortierdatum", "gv_kurland_urkunden.ausort",
                                "gv_kurland_urkunden.regest",
@@ -58,7 +58,7 @@ def create_csv_from_dict(dict, create_seperate_tables=False):
     table2 = []
     table3 = []
 
-    for e in dict:
+    for e in d:
         result = distinguish_case(e)
 
         if result[0] == 1:
@@ -75,19 +75,19 @@ def create_csv_from_dict(dict, create_seperate_tables=False):
     pd.DataFrame(table3).to_csv("Fall3.csv", index=False)
 
 
-def distinguish_case(ce):
+def distinguish_case(ce: dict) -> None or 0:
     if ce["Vorlage bekannt?"] == "" or ce["Vorlage bekannt?"].lower() == "nein" or ce["Vorlage bekannt?"] == "?":
-        return (1, handle_case_one(ce))
+        return 1, handle_case_one(ce)
     elif ce["Vorlage bekannt?"].lower() == "ja" and ce["KGU"].startswith("Bauer"):
-        return (2, handle_case_two(ce))
+        return 2, handle_case_two(ce)
     elif ce["Vorlage bekannt?"].lower() == "ja" and ce["KGU"].startswith("erg") and int(ce["KGU"][3:]) < 1500:
-        return (3, handle_case_three(ce))
+        return 3, handle_case_three(ce)
     else:
         print(f"Problem mit \n {ce}")
         return 0, None
 
 
-def handle_case_one(ce):
+def handle_case_one(ce: dict) -> dict:
     datum_und_ort = get_datum(ce)
     KGU = get_KGU(ce)
     Inhalt_und_Abschrift = get_inhalt(ce)
@@ -108,7 +108,7 @@ def handle_case_one(ce):
     return new_line
 
 
-def get_datum(ce):
+def get_datum(ce: dict) -> dict:
     result_set = {
         "Druckdatum": "",
         "Sortierdatum": "",
@@ -116,7 +116,7 @@ def get_datum(ce):
     }
     line_lst = ce['Datum'].split("\n")
     first_line = line_lst[0]
-    if (",") in first_line:
+    if "," in first_line:
         result_set["Sortierdatum"] = first_line[:(ce['Datum'].find(", "))]
         result_set["Austellungsort"] = first_line[(ce['Datum'].find(", ")) + 2:]
         if len(line_lst) > 1:
@@ -135,21 +135,21 @@ def get_datum(ce):
     return result_set
 
 
-def get_KGU(ce):
+def get_KGU(ce: dict) -> str or None:
     if "\n" in ce['KGU']:
         return " ".join(ce['KGU'].split("\n"))
     else:
         return None
 
 
-def get_inhalt(ce):
+def get_inhalt(ce: dict) -> list or None:
     if "\n" in ce['Inhalt']:
         return ce['Inhalt'].split("\n")
     else:
         return None
 
 
-def handle_case_two(ce):
+def handle_case_two(ce: dict) -> dict:
     datum_und_ort = get_datum(ce)
     Inhalt_und_Abschrift = get_inhalt(ce)
 
@@ -164,7 +164,7 @@ def handle_case_two(ce):
     return new_line
 
 
-def handle_case_three(ce):
+def handle_case_three(ce: dict) -> dict:
     datum_und_ort = get_datum(ce)
     Inhalt_und_Abschrift = get_inhalt(ce)
 
@@ -233,7 +233,7 @@ def find_all_token(main_string, sub_string='\n'):
     return result_set
 
 
-def clean_line(e):
+def clean_line(e: dict) -> dict:
     if e['Inhalt'].endswith(" ") or e['Inhalt'].endswith(","):
         e['Inhalt'] = e['Inhalt'][:-1]
     else:
@@ -242,26 +242,25 @@ def clean_line(e):
 
 
 if __name__ == '__main__':
+    '''analyse_case_distribution(d)
+
+            1365 Einträge erfüllen die erste Bedingung, 54 Einträge die zweite Bedingung, 21 Eintreäge die dritte Bedingung und 6 Einträge die vierte Bedingung.
+
+            Problematische Einträge:
+            {'Index': 1282, 'Signatur': 'Riga, Hist. StaatsA., Best. 6999: Dokumentensamlung der Liv-, Kur- und Estländischen Güter, Fb. 29, Brieflade Gut Schlockenbeck (Šlokenbeka), Akte 4', 'Blatt': 'Bl. 1, 2', 'Datum': '1531 Feb. 5, Wenden\nahm sondage nach purificationis Marie dem vifftenn dach des mantes February', 'Inhalt': 'Wolter von Plettenberg belehnt Hildebrand Brockhusen mit Land bei Tuckum\nAbschrift 19. Jh.', 'Material': '', 'O/K': 'K', 'Siegel': '', 'KGU': 'erg0852', 'Vorlage bekannt?': 'ja (aber mit Bezug auf Akte 20!)'}
+            {'Index': 1291, 'Signatur': 'Riga, Hist. StaatsA., Best. 6999: Dokumentensamlung der Liv-, Kur- und Estländischen Güter, Fb. 29, Brieflade Gut Schlockenbeck (Šlokenbeka), Akte 21', 'Blatt': 'Bl. 1v, 2, 2v', 'Datum': '1531 Feb. 5, Wenden\nam Sonntage nach Mariae Reinigung den fünften Tag des Monaths Februarii', 'Inhalt': 'Wolter von Plettenberg belehnt Hildebrand Brockhusen mit Land bei Tuckum\nAbschrift 18. Jh.', 'Material': '', 'O/K': 'K', 'Siegel': '', 'KGU': 'erg0852', 'Vorlage bekannt?': 'ja (aber mit Bezug auf Akte 20!)'}
+            {'Index': 1313, 'Signatur': 'Riga, Hist. StaatsA., Best. 6999: Dokumentensamlung der Liv-, Kur- und Estländischen Güter, Fb. 31, Brieflade Gut Stenden (Stende), Akte 26', 'Blatt': 'Bl.1', 'Datum': '1540 Apr. 12, Wenden\nden mondages nha Misericordias Domini', 'Inhalt': 'Hermann von Brüggenei belehnt Philipp von der Brüggen mit Senten... \nbeglaubigte Abschrift 1644', 'Material': '', 'O/K': 'K', 'Siegel': '', 'KGU': 'erg0347', 'Vorlage bekannt?': 'ja (mit Apr. 11!)'}
+            {'Index': 1355, 'Signatur': 'Riga, Hist. StaatsA., Best. 6999: Dokumentensamlung der Liv-, Kur- und Estländischen Güter, Fb. 31, Brieflade Gut Stenden (Stende), Akte 1182', 'Blatt': 'Bl. 3 (2)', 'Datum': '1391 Feb. 24, Durben\nferia sexta ante dominica, qua cantatur Oculi', 'Inhalt': 'Wennemar von Brüggenei belehnt Winricus von Durben... \nAbschrift 16. Jh.', 'Material': '', 'O/K': 'K', 'Siegel': '', 'KGU': 'Bauer129\n(mit Hinweis auf Akte 1183)', 'Vorlage bekannt?': 'ja?'}
+            {'Index': 1356, 'Signatur': 'Riga, Hist. StaatsA., Best. 6999: Dokumentensamlung der Liv-, Kur- und Estländischen Güter, Fb. 31, Brieflade Gut Stenden (Stende), Akte 1182', 'Blatt': 'Bl. 3 (3)', 'Datum': '1467 Sept. 8, Goldingen\nan dem daghe der geboerth der konnickliken maget Marien', 'Inhalt': 'Johann von Mengede belehnt Hermann Blomberg...\nAbschrift 16. Jh.', 'Material': '', 'O/K': 'K', 'Siegel': '', 'KGU': 'Bauer258\n(mit Hinweis auf Akte 1118)', 'Vorlage bekannt?': 'ja?'}
+            {'Index': 1409, 'Signatur': 'Riga, Hist. StaatsA., Best. 7363: Dokumente der Baltischen Geschichte, Handschriftensammlung, Fb. 3, Akte 75 („Copialbuch aus dem XIVten Jahrh. von 1242-1353“/Kurzemes bīskāpijas koparijis/Kopiarium des Bistums Kurland, 13.-14. Jh., Pergament = „Goldinger Kopialbuch“)', 'Blatt': 'Bl. 10v, 11', 'Datum': '1253 Apr.\nin dem aprille', 'Inhalt': 'Bischof Heinrich von Kurland … \nÜbersetzung, Abschrift um 1340', 'Material': '', 'O/K': 'K', 'Siegel': '', 'KGU': 'Bauer020', 'Vorlage bekannt?': 'ja?'}
+    '''
+
     '''dict1 = extract_tables_from_docx("LST_KurGüUrk_Überführung_final_V2(1).docx")
     preliminary_work(dict)
     serialize(dict1)'''
 
     dict = deserialize()
     print(json.dumps(dict, indent=4, ensure_ascii=False))
-    '''for e in dict:
-        print(json.dumps(handle_case_one(e), indent=4, ensure_ascii=False))
 
-    print(pd.DataFrame(dict).columns)'''
-    #create_csv_from_dict(dict)
-    '''analyse_case_distribution(d)
-        
-        1365 Einträge erfüllen die erste Bedingung, 54 Einträge die zweite Bedingung, 21 Eintreäge die dritte Bedingung und 6 Einträge die vierte Bedingung.
-        
-        Problematische Einträge:
-        {'Index': 1282, 'Signatur': 'Riga, Hist. StaatsA., Best. 6999: Dokumentensamlung der Liv-, Kur- und Estländischen Güter, Fb. 29, Brieflade Gut Schlockenbeck (Šlokenbeka), Akte 4', 'Blatt': 'Bl. 1, 2', 'Datum': '1531 Feb. 5, Wenden\nahm sondage nach purificationis Marie dem vifftenn dach des mantes February', 'Inhalt': 'Wolter von Plettenberg belehnt Hildebrand Brockhusen mit Land bei Tuckum\nAbschrift 19. Jh.', 'Material': '', 'O/K': 'K', 'Siegel': '', 'KGU': 'erg0852', 'Vorlage bekannt?': 'ja (aber mit Bezug auf Akte 20!)'}
-        {'Index': 1291, 'Signatur': 'Riga, Hist. StaatsA., Best. 6999: Dokumentensamlung der Liv-, Kur- und Estländischen Güter, Fb. 29, Brieflade Gut Schlockenbeck (Šlokenbeka), Akte 21', 'Blatt': 'Bl. 1v, 2, 2v', 'Datum': '1531 Feb. 5, Wenden\nam Sonntage nach Mariae Reinigung den fünften Tag des Monaths Februarii', 'Inhalt': 'Wolter von Plettenberg belehnt Hildebrand Brockhusen mit Land bei Tuckum\nAbschrift 18. Jh.', 'Material': '', 'O/K': 'K', 'Siegel': '', 'KGU': 'erg0852', 'Vorlage bekannt?': 'ja (aber mit Bezug auf Akte 20!)'}
-        {'Index': 1313, 'Signatur': 'Riga, Hist. StaatsA., Best. 6999: Dokumentensamlung der Liv-, Kur- und Estländischen Güter, Fb. 31, Brieflade Gut Stenden (Stende), Akte 26', 'Blatt': 'Bl.1', 'Datum': '1540 Apr. 12, Wenden\nden mondages nha Misericordias Domini', 'Inhalt': 'Hermann von Brüggenei belehnt Philipp von der Brüggen mit Senten... \nbeglaubigte Abschrift 1644', 'Material': '', 'O/K': 'K', 'Siegel': '', 'KGU': 'erg0347', 'Vorlage bekannt?': 'ja (mit Apr. 11!)'}
-        {'Index': 1355, 'Signatur': 'Riga, Hist. StaatsA., Best. 6999: Dokumentensamlung der Liv-, Kur- und Estländischen Güter, Fb. 31, Brieflade Gut Stenden (Stende), Akte 1182', 'Blatt': 'Bl. 3 (2)', 'Datum': '1391 Feb. 24, Durben\nferia sexta ante dominica, qua cantatur Oculi', 'Inhalt': 'Wennemar von Brüggenei belehnt Winricus von Durben... \nAbschrift 16. Jh.', 'Material': '', 'O/K': 'K', 'Siegel': '', 'KGU': 'Bauer129\n(mit Hinweis auf Akte 1183)', 'Vorlage bekannt?': 'ja?'}
-        {'Index': 1356, 'Signatur': 'Riga, Hist. StaatsA., Best. 6999: Dokumentensamlung der Liv-, Kur- und Estländischen Güter, Fb. 31, Brieflade Gut Stenden (Stende), Akte 1182', 'Blatt': 'Bl. 3 (3)', 'Datum': '1467 Sept. 8, Goldingen\nan dem daghe der geboerth der konnickliken maget Marien', 'Inhalt': 'Johann von Mengede belehnt Hermann Blomberg...\nAbschrift 16. Jh.', 'Material': '', 'O/K': 'K', 'Siegel': '', 'KGU': 'Bauer258\n(mit Hinweis auf Akte 1118)', 'Vorlage bekannt?': 'ja?'}
-        {'Index': 1409, 'Signatur': 'Riga, Hist. StaatsA., Best. 7363: Dokumente der Baltischen Geschichte, Handschriftensammlung, Fb. 3, Akte 75 („Copialbuch aus dem XIVten Jahrh. von 1242-1353“/Kurzemes bīskāpijas koparijis/Kopiarium des Bistums Kurland, 13.-14. Jh., Pergament = „Goldinger Kopialbuch“)', 'Blatt': 'Bl. 10v, 11', 'Datum': '1253 Apr.\nin dem aprille', 'Inhalt': 'Bischof Heinrich von Kurland … \nÜbersetzung, Abschrift um 1340', 'Material': '', 'O/K': 'K', 'Siegel': '', 'KGU': 'Bauer020', 'Vorlage bekannt?': 'ja?'}
-    '''
+    create_csv_from_dict(dict)
+
