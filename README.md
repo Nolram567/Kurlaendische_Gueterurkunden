@@ -1,7 +1,7 @@
 # Kurlaendische_Gueterurkunden
 Dieser Code wurde im Rahmen einer Auftragsarbeit für das Herder-Institut für historische Ostmitteleuropaforschung geschrieben.
 Ein Urkundenbestand wurde in Riga gesichtet und tabellarisch in einer .docx-Datei dokumentiert.
-Meine Aufgabe bestand darin, die Tabelle auf das Datenbankschema abzubilden, dass der Datenbank [Kurländische Güterurkunden](https://www.herder-institut.de/kurlaendische-gueterurkunden/) zugrunde liegt. Dabei wird zwischen 3 Fällen unterschieden.
+Meine Aufgabe bestand darin, die Tabelle auf das Datenbankschema abzubilden, das der Datenbank [Kurländische Güterurkunden](https://www.herder-institut.de/kurlaendische-gueterurkunden/) zugrunde liegt. Dabei wird zwischen 3 Fällen unterschieden.
 
 - Fall 1: Die Urkunde ist noch nicht bekannt.
 - Fall 2: Die Urkunde ist bereits bekannt und ein in der Datenbank bereits vorhandener Datensatz wird ergänzt.
