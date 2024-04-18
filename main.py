@@ -78,7 +78,7 @@ def create_csv_from_dict(d: dict, create_seperate_tables=False) -> None:
     pd.DataFrame(table3).to_csv("Fall3.csv", index=False)
 
 
-def distinguish_case(ce: dict) -> None or 0:
+def distinguish_case(ce: dict) -> tuple:
     if ce["Vorlage bekannt?"] == "" or ce["Vorlage bekannt?"].lower() == "nein" or ce["Vorlage bekannt?"] == "?":
         return 1, handle_case_one(ce)
     elif ce["Vorlage bekannt?"].lower() == "ja" and ce["KGU"].startswith("Bauer"):
