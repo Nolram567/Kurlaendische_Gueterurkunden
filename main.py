@@ -5,8 +5,13 @@ import pandas as pd
 
 def extract_tables_from_docx(filename: str) -> list:
     """
-    Liest die vorliegend .docx-Datei und erstellt einen Dataframe aus der vorliegenden Tabelle. Wir nehmen an, dass die
-    Datei nur eine Tabelle enthält.
+    Diese Funktion liest die vorliegende .docx-Datei ein und erstellt einen Dataframe aus der vorliegenden Tabelle.
+    Wir nehmen an, dass dieDatei nur eine Tabelle enthält.
+
+    Args:
+        filename: Der Dateiname der .docx-Datei als String.
+    Returns:
+        Die Tabelle als eine Liste von Dictionaries.
     """
     doc = Document(filename)
 
@@ -25,19 +30,17 @@ def extract_tables_from_docx(filename: str) -> list:
 
     df = pd.DataFrame(data, columns=columns)
 
-    df['Index'] = df['Index'].astype(int)  # Stellen Sie sicher, dass der Index numerisch ist
+    df['Index'] = df['Index'].astype(int)
 
     # Caste den Dataframe zu einem Dictionary (List of Dictionary's).
     return df.to_dict('records')
 
-
-def serialize(d: dict) -> None:
+def serialize(d: list) -> None:
     """
-    Speichert die Liste als json im Arbeitsverzeichnis.
+    Die Funktion speichert die Liste als json im Arbeitsverzeichnis.
     """
     with open('table.json', 'w', encoding='utf-8') as f:
         json.dump(d, f, ensure_ascii=False)
-
 
 def deserialize() -> json:
     """
@@ -88,7 +91,7 @@ def distinguish_case(ce: dict) -> None or 0:
 
 
 def handle_case_one(ce: dict) -> dict:
-    datum_und_ort = get_datum(ce)
+    datum_und_ort = get_date(ce)
     KGU = get_KGU(ce)
     Inhalt_und_Abschrift = get_inhalt(ce)
 
@@ -108,7 +111,7 @@ def handle_case_one(ce: dict) -> dict:
     return new_line
 
 
-def get_datum(ce: dict) -> dict:
+def get_date(ce: dict) -> dict:
     result_set = {
         "Druckdatum": "",
         "Sortierdatum": "",
@@ -150,7 +153,7 @@ def get_inhalt(ce: dict) -> list or None:
 
 
 def handle_case_two(ce: dict) -> dict:
-    datum_und_ort = get_datum(ce)
+    datum_und_ort = get_date(ce)
     Inhalt_und_Abschrift = get_inhalt(ce)
 
     new_line = {
@@ -165,7 +168,7 @@ def handle_case_two(ce: dict) -> dict:
 
 
 def handle_case_three(ce: dict) -> dict:
-    datum_und_ort = get_datum(ce)
+    datum_und_ort = get_date(ce)
     Inhalt_und_Abschrift = get_inhalt(ce)
 
     new_line = {
@@ -178,7 +181,10 @@ def handle_case_three(ce: dict) -> dict:
     return new_line
 
 
-def analyse_case_distribution(d):
+def analyse_case_distribution(d: dict) -> None:
+    """
+    Die Funktion analysiert die Fallverteilung und druckt sie auf der Konsole.
+    """
     case1, case2, case3, case4 = 0, 0, 0, 0
 
     for e in d:
@@ -200,7 +206,10 @@ def analyse_case_distribution(d):
         f"{case1} Einträge erfüllen die erste Bedingung, {case2} Einträge die zweite Bedingung, {case3} Eintreäge die dritte Bedingung und {case4} Einträge die vierte Bedingung.")
 
 
-def preliminary_work(d, inplace=True):
+def preliminary_work(d: dict) -> None:
+    """
+    Diese Funktion bereinigt die Daten nach den Spezifikationen der Auftraggeber.
+    """
     counter = 0
     for e in d:
         if e['Material'] == "":
